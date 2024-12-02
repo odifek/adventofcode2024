@@ -1,4 +1,3 @@
-import java.io.File
 import kotlin.math.abs
 
 // aoc-2024-in-kotlin
@@ -30,7 +29,7 @@ fun main() {
     // Part Two - similarity score
 
     var similarityScore = 0
-    leftSorted.forEach {  value ->
+    leftSorted.forEach { value ->
         similarityScore += value * rightSorted.count { it == value }
     }
     print("Similarity Score: ")

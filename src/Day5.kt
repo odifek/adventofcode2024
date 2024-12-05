@@ -1,6 +1,10 @@
 fun main() {
     val input = readFileInput("day5.txt")
 
+    part1(input)
+}
+
+private fun part1(input: List<String>) {
     val pageOrderingRules = input.subList(0, toIndex = input.indexOfFirst { it.isBlank() })
         .map { it.split("|").let { (first, second) -> first.toLong() to second.toLong() } }
 
@@ -12,15 +16,14 @@ fun main() {
     val validLines = mutableListOf<List<Long>>()
     for (line in pageUpdates) {
         var isUpdateValid = true
-        line.forEachIndexed { index, page ->
+        for ((index, page) in line.withIndex()) {
             val ruleForPage = getRulesForPage(page, pageOrderingRules)
-            val before = line.subList(0, index)
+            val before = if (index > 0) line.subList(0, index) else emptyList()
             val after = if (index != line.lastIndex) line.subList(index + 1, line.size) else emptyList()
-
-            isUpdateValid =  ruleForPage.mustBefore.intersect(after.toSet()).isNotEmpty()
-                    || ruleForPage.mustAfter.intersect(before.toSet()).isNotEmpty()
+            isUpdateValid = ruleForPage.mustBefore.intersect(after.toSet()).isEmpty()
+                    && ruleForPage.mustAfter.intersect(before.toSet()).isEmpty()
             if (!isUpdateValid) {
-                return@forEachIndexed
+                break
             }
         }
         if (isUpdateValid) {
@@ -31,9 +34,6 @@ fun main() {
         line[line.size / 2]
     }
 
-    println(pageOrderingRules)
-    println(pageUpdates)
-    println(validLines)
     println(sumOfMiddlePages)
 }
 

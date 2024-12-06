@@ -1,14 +1,57 @@
+import kotlin.system.measureTimeMillis
+
 private const val GUARD = '^'
 private const val OBSTRUCTION = '#'
 fun main() {
 
     val input = readFileInput("day6.txt")
-    partOne(input)
+    val pathToExit = partOne(input)
+    measureTimeMillis { partTwo(pathToExit, input) }.let { println("Part 2 time: $it millis") }
+
 }
 
-private fun partOne(input: List<String>) {
+private fun partTwo(exitPath: List<Position>, input: List<String>) {
+    val inputMatrix = InputMatrix(input)
+    val currentLoop = mutableListOf<Position>()
+    val uniquePossibleCoords = mutableSetOf<Coord>()
 
-    val positionsVisited = mutableSetOf<Coord>()
+    loop1@ for (position in exitPath.subList(1, exitPath.size)) {
+        var currentPos = exitPath.first()
+        if (position.coord == exitPath.first().coord) {
+            // Skip original position
+            continue@loop1
+        }
+        val modifiedMatrix = addObstructionAtCoordinates(position.coord, inputMatrix)
+        while (true) {
+            val futurePosition = currentPos.move()
+            if (isInsideArea(futurePosition.coord, modifiedMatrix)) {
+                currentPos = if (hasAnyObstruction(futurePosition.coord, modifiedMatrix)) {
+                    currentPos.turnRight()
+                } else {
+                    futurePosition
+                }
+                if (currentLoop.contains(currentPos)) {
+                    // We've gone this way before. Definitely in an infinite loop
+                    uniquePossibleCoords.add(position.coord)
+                    currentLoop.clear()
+                    break
+                }
+                currentLoop.add(currentPos)
+            } else {
+                currentLoop.clear()
+                break
+            }
+        }
+    }
+    println("Possible Infinite Loops")
+    println(uniquePossibleCoords.size)
+}
+
+private fun partOne(input: List<String>): List<Position> {
+
+    // Accumulate the entire positions and direction to exit the matri
+    val pathToExit = mutableListOf<Position>()
+    val locationsVisited = mutableSetOf<Coord>()
     var currentPos = Position(Coord(x = -1, y = -1), direction = Direction.Up)
     for ((index, line) in input.withIndex()) {
         val guardPosition = line.indexOf(GUARD)
@@ -19,21 +62,28 @@ private fun partOne(input: List<String>) {
     }
 
     val inputMatrix = InputMatrix(input)
-    positionsVisited.add(currentPos.coord)
+    locationsVisited.add(currentPos.coord)
+    pathToExit.add(currentPos)
     while (true) {
         val futurePosition = currentPos.move()
         if (isInsideArea(futurePosition.coord, inputMatrix)) {
             currentPos = if (hasAnyObstruction(futurePosition.coord, inputMatrix)) {
                 currentPos.turnRight()
             } else {
-                futurePosition.also { positionsVisited.add(it.coord)}
+                futurePosition.also {
+                    locationsVisited.add(it.coord)
+                }
             }
+            pathToExit.add(currentPos)
         } else {
             break
         }
     }
 
-    println(positionsVisited.size)
+    println(locationsVisited.size)
+    println("Exit path length: ${pathToExit.size}")
+    println()
+    return pathToExit
 }
 
 private fun isInsideArea(position: Coord, matrix: InputMatrix): Boolean =
@@ -50,6 +100,20 @@ private fun move(coord: Coord, direction: Direction): Coord {
         Direction.Left -> coord.copy(x = coord.x - 1)
         Direction.Right -> coord.copy(x = coord.x + 1)
     }
+}
+
+private fun addObstructionAtCoordinates(coord: Coord, inputMatrix: InputMatrix): InputMatrix {
+    val mutableLines = inputMatrix.rows.toMutableList()
+    val lineToUpdate = inputMatrix.rows[coord.y]
+    val lhs = lineToUpdate.substring(0, coord.x)
+    val rhs = if (coord.x < lineToUpdate.lastIndex) {
+        lineToUpdate.substring(coord.x + 1, lineToUpdate.length)
+    } else {
+        ""
+    }
+    val updatedLine = lhs + OBSTRUCTION + rhs
+    mutableLines[inputMatrix.rows.indexOf(lineToUpdate)] = updatedLine
+    return InputMatrix(mutableLines)
 }
 
 private enum class Direction {

@@ -12,7 +12,6 @@ fun main() {
 
 private fun partTwo(exitPath: List<Position>, input: List<String>) {
     val inputMatrix = InputMatrix(input)
-    val currentLoop = mutableListOf<Position>()
     val uniquePossibleCoords = mutableSetOf<Coord>()
 
     loop1@ for (position in exitPath.subList(1, exitPath.size)) {
@@ -22,6 +21,7 @@ private fun partTwo(exitPath: List<Position>, input: List<String>) {
             continue@loop1
         }
         val modifiedMatrix = addObstructionAtCoordinates(position.coord, inputMatrix)
+        val currentLoop = mutableMapOf<Position, Unit>()
         while (true) {
             val futurePosition = currentPos.move()
             if (isInsideArea(futurePosition.coord, modifiedMatrix)) {
@@ -33,12 +33,10 @@ private fun partTwo(exitPath: List<Position>, input: List<String>) {
                 if (currentLoop.contains(currentPos)) {
                     // We've gone this way before. Definitely in an infinite loop
                     uniquePossibleCoords.add(position.coord)
-                    currentLoop.clear()
                     break
                 }
-                currentLoop.add(currentPos)
+                currentLoop[currentPos] = Unit
             } else {
-                currentLoop.clear()
                 break
             }
         }

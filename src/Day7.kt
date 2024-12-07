@@ -30,6 +30,10 @@ private fun partOneTotalCalibrationResult(input: List<String>) {
             if (currentResult == testResult) {
                 total += currentResult
 
+                val equation =
+                    operands.mapIndexed { index, op -> if (index == 0) "$op" else "${operators[index - 1].ops}$op" }
+                        .joinToString(separator = "")
+                println("$testResult: $equation")
                 break
             }
         }

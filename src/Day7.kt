@@ -4,12 +4,15 @@ import kotlin.system.measureTimeMillis
 fun main() {
 
     val input = readFileInput("day7.txt")
-    measureTimeMillis { partOneTotalCalibrationResult(input) }.also {
-        println("Time taken: $it millis")
+    measureTimeMillis { totalCalibrationResult(input, supportedOperators = setOf(Operator.Add, Operator.Multiply)) }.also {
+        println("Part1 - Time taken: $it millis")
+    }
+    measureTimeMillis { totalCalibrationResult(input, supportedOperators = setOf(Operator.Add, Operator.Multiply, Operator.Concat)) }.also {
+        println("Part2 - Time taken: $it millis")
     }
 }
 
-private fun partOneTotalCalibrationResult(input: List<String>) {
+private fun totalCalibrationResult(input: List<String>, supportedOperators: Set<Operator>) {
     var total = 0L
     for (line in input) {
         val testResult = line.substring(startIndex = 0, endIndex = line.indexOf(":")).toLong()
@@ -18,22 +21,23 @@ private fun partOneTotalCalibrationResult(input: List<String>) {
             .split(" ")
             .map { it.toLong() }
         val numberOfOperatorsRequired = operands.size - 1
-        val numberOfPossibleOperations = 2.0.pow(numberOfOperatorsRequired.toDouble()).toInt()
+        val numberOfPossibleOperations = supportedOperators.size.toDouble()
+            .pow(numberOfOperatorsRequired.toDouble()).toLong()
 
 
         for (operation in 0..numberOfPossibleOperations) {
-            val operators = operation.toString(radix = 2)
+            val operators = operation.toString(radix = supportedOperators.size)
                 .padStart(numberOfOperatorsRequired, padChar = '0')
-                .map { if (it == '0') Operator.Add else Operator.Multiply }
+                .map(Operator.Companion::fromCode)
             val currentResult =
                 operands.reduceIndexed { index, acc, next -> performOperation(operators[index - 1], acc, next) }
             if (currentResult == testResult) {
                 total += currentResult
 
-                val equation =
-                    operands.mapIndexed { index, op -> if (index == 0) "$op" else "${operators[index - 1].ops}$op" }
-                        .joinToString(separator = "")
-                println("$testResult: $equation")
+                // val equation =
+                //     operands.mapIndexed { index, op -> if (index == 0) "$op" else "${operators[index - 1].ops}$op" }
+                //         .joinToString(separator = "")
+                // println("$testResult: $equation")
                 break
             }
         }
@@ -45,8 +49,15 @@ private fun partOneTotalCalibrationResult(input: List<String>) {
 private fun performOperation(operator: Operator, op1: Long, op2: Long): Long = when (operator) {
     Operator.Add -> op1 + op2
     Operator.Multiply -> op1 * op2
+    Operator.Concat -> "$op1$op2".toLong()
 }
 
-private enum class Operator(val ops: Char) {
-    Add('+'), Multiply('*')
+private enum class Operator(val ops: String, val code: Char) {
+    Add(ops = "+", code = '0'),
+    Multiply(ops = "*", code = '1'),
+    Concat(ops = "||", code = '2');
+
+    companion object {
+        fun fromCode(code: Char) = Operator.entries.first { it.code == code }
+    }
 }

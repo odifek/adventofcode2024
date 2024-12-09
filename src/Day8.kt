@@ -1,7 +1,7 @@
 import util.*
 
 fun main() {
-    val input = readFileInput("sample8.txt")
+    val input = readFileInput("day8.txt")
 
     val antennas = input.flatMapIndexed { y, line ->
         line.mapIndexedNotNull { x, c ->
@@ -56,7 +56,7 @@ private fun findAllAntinodes(
     val distance = points[0].distanceFrom(points[1])
     return buildList {
         if (includeHarmonics) {
-            var harmonic = 1
+            var harmonic = 0
             while (true) {
                 val firstAntinode = points[0] + distance * harmonic
                 if (!firstAntinode.isWithinBounds(boardSize)) {
@@ -66,6 +66,8 @@ private fun findAllAntinodes(
                 }
                 harmonic++
             }
+            // Reset the harmonic for the other direction. But start from 1 since we've calculated 0 already
+            harmonic = 1
             while (true) {
                 val secondAntinode = points[0] - distance * (harmonic)
                 if (!secondAntinode.isWithinBounds(boardSize)) {
